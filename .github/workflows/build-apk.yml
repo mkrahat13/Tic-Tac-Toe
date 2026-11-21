@@ -43,22 +43,17 @@ jobs:
           npx cap add android
           npx cap copy android
 
-      - name: Generate Custom App Icon and Splash Screen
+      - name: Generate Custom Adaptive App Icon
         run: |
-          mkdir -p assets
           if [ -f "icon.png" ]; then
+            mkdir -p assets
             cp icon.png assets/icon-only.png
-          fi
-          if [ -f "splash.png" ]; then
-            cp splash.png assets/splash.png
-          fi
-          if [ -f "assets/icon-only.png" ] || [ -f "assets/splash.png" ]; then
+            cp icon.png assets/icon-foreground.png
+            cp icon.png assets/icon-background.png
             npm install -D @capacitor/assets --legacy-peer-deps
             npx capacitor-assets generate --android \
               --iconBackgroundColor '#FFFFFF' \
-              --iconBackgroundColorDark '#FFFFFF' \
-              --splashBackgroundColor '#FFFFFF' \
-              --splashBackgroundColorDark '#FFFFFF'
+              --iconBackgroundColorDark '#FFFFFF'
           fi
 
       - name: Accept Android SDK licenses
