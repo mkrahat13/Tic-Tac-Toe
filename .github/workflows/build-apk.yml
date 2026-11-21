@@ -38,13 +38,17 @@ jobs:
       - name: Convert to Android project with Capacitor
         run: |
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 --legacy-peer-deps
-          npx cap init "Tic Tac Toe Pro" "com.tictactoe.pro" --web-dir=dist
+          rm -f capacitor.config.ts capacitor.config.json
+          echo '{"appId":"com.tictactoe.pro","appName":"Tic Tac Toe Pro","webDir":"dist"}' > capacitor.config.json
           npx cap add android
           npx cap copy android
 
       - name: Accept Android SDK licenses
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          SDK_DIR="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          if [ -n "$SDK_DIR" ] && [ -x "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          fi
 
       - name: Build Debug APK
         run: |
