@@ -39,9 +39,27 @@ jobs:
         run: |
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 --legacy-peer-deps
           rm -f capacitor.config.ts capacitor.config.json
-          echo '{"appId":"com.tictactoe.pro","appName":"Tic Tac Toe Pro","webDir":"dist"}' > capacitor.config.json
+          echo '{"appId":"com.tictactoe.pro","appName":"Tic Tac Toe","webDir":"dist"}' > capacitor.config.json
           npx cap add android
           npx cap copy android
+
+      - name: Generate Custom App Icon and Splash Screen
+        run: |
+          mkdir -p assets
+          if [ -f "icon.png" ]; then
+            cp icon.png assets/icon-only.png
+          fi
+          if [ -f "splash.png" ]; then
+            cp splash.png assets/splash.png
+          fi
+          if [ -f "assets/icon-only.png" ] || [ -f "assets/splash.png" ]; then
+            npm install -D @capacitor/assets --legacy-peer-deps
+            npx capacitor-assets generate --android \
+              --iconBackgroundColor '#FFFFFF' \
+              --iconBackgroundColorDark '#FFFFFF' \
+              --splashBackgroundColor '#FFFFFF' \
+              --splashBackgroundColorDark '#FFFFFF'
+          fi
 
       - name: Accept Android SDK licenses
         run: |
