@@ -39,7 +39,7 @@ jobs:
         run: |
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 --legacy-peer-deps
           rm -f capacitor.config.ts capacitor.config.json
-          echo '{"appId":"com.tictactoe.pro","appName":"Tic Tac Toe","webDir":"dist"}' > capacitor.config.json
+          echo '{"appId":"com.taxiservice.rahat","appName":"RAHAT TAXI SERVICE","webDir":"dist"}' > capacitor.config.json
           npx cap add android
           npx cap copy android
 
@@ -63,6 +63,63 @@ jobs:
             yes | "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
           fi
 
+      - name: Enable Native Fullscreen and Landscape Mode
+        run: |
+          MAIN_ACT=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
+          PKG_LINE=$(grep "^package " "$MAIN_ACT")
+          cat <<EOF > "$MAIN_ACT"
+          $PKG_LINE
+
+          import android.content.pm.ActivityInfo;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.view.WindowManager;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                  enableImmersiveMode();
+              }
+
+              @Override
+              public void onResume() {
+                  super.onResume();
+                  enableImmersiveMode();
+              }
+
+              @Override
+              public void onWindowFocusChanged(boolean hasFocus) {
+                  super.onWindowFocusChanged(hasFocus);
+                  if (hasFocus) {
+                      enableImmersiveMode();
+                  }
+              }
+
+              private void enableImmersiveMode() {
+                  WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                      WindowManager.LayoutParams lp = getWindow().getAttributes();
+                      lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                      getWindow().setAttributes(lp);
+                  }
+                  WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+                  if (controller != null) {
+                      controller.hide(WindowInsetsCompat.Type.systemBars());
+                      controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                  }
+              }
+          }
+          EOF
+          sed -i 's/android:name="[^"]*MainActivity"/& android:screenOrientation="sensorLandscape"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/initial-scale=1\.0"/initial-scale=1.0, viewport-fit=cover"/' android/app/src/main/assets/public/index.html || true
+
+
       - name: Build Debug APK
         run: |
           cd android
@@ -72,5 +129,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: TicTacToePro-APK
+          name: RAHATTAXISERVICE
           path: android/app/build/outputs/apk/debug/app-debug.apk
